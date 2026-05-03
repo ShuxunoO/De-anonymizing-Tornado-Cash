@@ -10,18 +10,12 @@ To address these challenges, we propose a multidimensional transaction-feature-b
 
 ### 2.1 Input Data Schema
 
-Our analysis is built upon five CSV tables:
+Our analysis is built upon two CSV tables:
 
 | Table | Description |
 |---|---|
 | `tornadocash_onestep_clues.csv` | Main linkage table with deposit-recipient pairs (10,853 records) |
 | `tornadocash_onestep_clues_details.csv` | Transaction-step evidence for each linkage (25,615 records) |
-| `tornadocash_raw_deposit_transactions.csv` | Raw deposit transactions for linked addresses |
-| `tornadocash_raw_withdrawal_transactions.csv` | Raw withdrawal transactions for linked addresses |
-| `tornadocash_deposit_address_onestep_trace_history.csv` | One-hop trace history for deposit addresses |
-| `tornadocash_withdrawal_address_onestep_trace_history.csv` | One-hop trace history for withdrawal addresses |
-
-The key constraint is that public infrastructure addresses (exchanges, bridges, mining pools, large DeFi contracts) have been pre-filtered from the trace history tables, meaning all counterparty analysis operates on a **filtered private ETH interaction subgraph** rather than the complete Ethereum graph.
 
 ### 2.2 Multi-Level Analysis Hierarchy
 
@@ -76,7 +70,7 @@ We decompose the timeline around TC usage into three stages:
 
 ### 2.5 Counterparty Analysis in Filtered Subgraph
 
-Since the trace history operates on a filtered subgraph (public addresses removed), all counterparty metrics must be interpreted as observations within the filtered private interaction view, not absolute values on the full Ethereum graph.
+Counterparty metrics must be interpreted as observations within the filtered private interaction view, not absolute values on the full Ethereum graph.
 
 **One-hop breadth metrics:**
 
@@ -168,15 +162,11 @@ The analysis demonstrates that TC weakens direct deposit-withdrawal transaction 
 
 ## 6. Dataset Files
 
-The release contains seven CSV files:
+The release contains two CSV files:
 
 | File | Description |
 |---|---|
 | `tornadocash_onestep_clues.csv` | Main linkage table (10,853 records) |
 | `tornadocash_onestep_clues_details.csv` | Transaction-step evidence (25,615 records) |
-| `tornadocash_raw_deposit_transactions.csv` | Raw deposit transactions for linked addresses |
-| `tornadocash_raw_withdrawal_transactions.csv` | Raw withdrawal transactions for linked addresses |
-| `tornadocash_deposit_address_onestep_trace_history.csv` | One-hop trace history for deposit addresses |
-| `tornadocash_withdrawal_address_onestep_trace_history.csv` | One-hop trace history for withdrawal addresses |
 
 For detailed field documentation, see `Tornado_Cash_Linkage_Dataset_introduction.md` in the dataset directory.

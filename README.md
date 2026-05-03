@@ -69,7 +69,7 @@ Alchemy API
 ### Data Collection
 
 **[`code/get_tornadoCash_gas_data_by_Alchemy_multithreading.py`](code/get_tornadoCash_gas_data_by_Alchemy_multithreading.py)**
-Fetches all TC-related transactions from Alchemy API for pool contracts (`0xA160...`) and router contracts (`0xd90e...`). Supports multi-threaded API key rotation. Constructs raw deposit/withdraw transfer tables per pool.
+Fetches all TC-related transactions from Alchemy API for pool contracts (`0xA160...`) and router contracts (`0xd90e...`). Supports multi-threaded API key rotation and constructs transfer tables per pool.
 
 **[`code/get_internal_transfer_caller.py`](code/get_internal_transfer_caller.py)**
 Queries the Alchemy Trace API to find the actual transaction initiator (caller) for each TC withdrawal. Distinguishes relayer-initiated transactions from direct user-initiated ones, extracting `none_relayer_caller_address`.
@@ -158,7 +158,7 @@ Final export script. Integrates clues from three source groups into a unified ou
 Performs:
 - Blacklist filtering (burn addresses)
 - Deduplication by `(deposit_address, withdraw_address)` pairs
-- Exports main clues CSV, detail traces CSV, raw deposit/withdrawal transactions, and one-hop trace histories
+- Exports main clues CSV and detail traces CSV
 
 ---
 
@@ -172,10 +172,6 @@ For detailed documentation, see [`dataset/Tornado_Cash_Linkage_Dataset_introduct
 |---|---|---|
 | `tornadocash_onestep_clues.csv` | 10,853 | Main linkage table |
 | `tornadocash_onestep_clues_details.csv` | 25,615 | Transaction-step evidence |
-| `tornadocash_raw_deposit_transactions.csv` | — | Raw deposit transactions |
-| `tornadocash_raw_withdrawal_transactions.csv` | — | Raw withdrawal transactions |
-| `tornadocash_deposit_address_onestep_trace_history.csv` | — | Deposit one-hop trace history |
-| `tornadocash_withdrawal_address_onestep_trace_history.csv` | — | Withdrawal one-hop trace history |
 
 ### Linkage Categories
 
@@ -315,11 +311,7 @@ De-anonymizing-Tornado-Cash/
 ├── dataset/
 │   ├── Tornado_Cash_Linkage_Dataset_introduction.md  # Dataset documentation
 │   ├── tornadocash_onestep_clues.csv   # Main linkage table
-│   ├── tornadocash_onestep_clues_details.csv  # Evidence detail table
-│   ├── tornadocash_raw_deposit_transactions.csv  # Raw deposit transactions
-│   ├── tornadocash_raw_withdrawal_transactions.csv  # Raw withdrawal transactions
-│   ├── tornadocash_deposit_address_onestep_trace_history.csv  # Deposit trace history
-│   └── tornadocash_withdrawal_address_onestep_trace_history.csv  # Withdrawal trace history
+│   └── tornadocash_onestep_clues_details.csv  # Evidence detail table
 ├── analysis/
 │   ├── Introduction.md                 # Empirical analysis narrative
 │   ├── 02_overview_analysis.ipynb      # Exploratory analysis notebook

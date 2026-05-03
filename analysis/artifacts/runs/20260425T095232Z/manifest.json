@@ -4,24 +4,8 @@
   "generated_at": "2026-04-25T09:53:09Z",
   "inputs": {
     "clues": {
-      "path": "/mnt/nas/shuxun/TC_data_v2/tornadocash_onestep_clues.csv",
+      "path": "xxx/tornadocash_onestep_clues.csv",
       "bytes": 4131370
-    },
-    "deposit_history": {
-      "path": "/mnt/nas/shuxun/TC_data_v2/tornadocash_deposit_address_onestep_trace_history.csv",
-      "bytes": 462952658
-    },
-    "raw_deposits": {
-      "path": "/mnt/nas/shuxun/TC_data_v2/tornadocash_raw_deposit_transactions.csv",
-      "bytes": 24371428
-    },
-    "raw_withdrawals": {
-      "path": "/mnt/nas/shuxun/TC_data_v2/tornadocash_raw_withdrawal_transactions.csv",
-      "bytes": 112473588
-    },
-    "withdrawal_history": {
-      "path": "/mnt/nas/shuxun/TC_data_v2/tornadocash_withdrawal_address_onestep_trace_history.csv",
-      "bytes": 108600982
     }
   },
   "tables": [

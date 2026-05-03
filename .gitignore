@@ -198,10 +198,7 @@ cython_debug/
 #   Visual Studio Code specific template is maintained in a separate VisualStudioCode.gitignore 
 #   that can be found at https://github.com/github/gitignore/blob/main/Global/VisualStudioCode.gitignore
 
-# Large local datasets and generated artifacts
-dataset/tornadocash_deposit_address_onestep_trace_history.csv
-dataset/tornadocash_raw_withdrawal_transactions.csv
-dataset/tornadocash_withdrawal_address_onestep_trace_history.csv
+# Large generated artifacts
 analysis/artifacts/runs/20260425T095232Z/features/candidate_gaps.parquet
 #   and can be added to the global gitignore or merged into this file. However, if you prefer, 
 #   you could uncomment the following to ignore the entire vscode folder

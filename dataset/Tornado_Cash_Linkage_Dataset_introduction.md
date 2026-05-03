@@ -6,16 +6,12 @@ The dataset is designed as a research artifact for mixer forensics, anonymity ev
 
 ## Dataset Files
 
-The release contains seven CSV files:
+The release contains two CSV files:
 
 | File | Rows | Description |
 |---|---|---:|
 | `tornadocash_onestep_clues.csv` | 10,853 | Main linkage table with deposit-recipient pairs and metadata. |
 | `tornadocash_onestep_clues_details.csv` | 25,615 | Transaction-step evidence for each linkage record. |
-| `tornadocash_raw_deposit_transactions.csv` | Variable | Raw deposit transactions for addresses in the linkage table. |
-| `tornadocash_raw_withdrawal_transactions.csv` | Variable | Raw withdrawal transactions for addresses in the linkage table. |
-| `tornadocash_deposit_address_onestep_trace_history.csv` | Variable | One-hop trace history for deposit addresses. |
-| `tornadocash_withdrawal_address_onestep_trace_history.csv` | Variable | One-hop trace history for withdrawal addresses. |
 
 ## Dataset Scope
 
@@ -153,110 +149,6 @@ The detail table contains multiple assets observed in linkage evidence:
 | `WBTC` | 220 |
 | `TORN` | 111 |
 
-## 3. `tornadocash_raw_deposit_transactions.csv`
-
-Raw deposit transactions associated with deposit addresses in the linkage table. Includes both main pool and proxy deposit records.
-
-| Field | Meaning | Type / Format |
-|---|---|---|
-| `pool_name` | Pool name (`100ETH`, `10ETH`, `1ETH`, `0_1ETH`). | String |
-| `address_type` | Always `deposit_address`. | String |
-| `target_address` | The deposit address being described. | Ethereum address |
-| `unique_id` | Unique transaction identifier combining tx_hash and category. | String |
-| `block_num` | Ethereum block number. | Integer |
-| `block_timestamp` | Block timestamp. | Timestamp |
-| `tx_hash` | Transaction hash. | Transaction hash |
-| `from_address` | Transaction sender. | Ethereum address |
-| `to_address` | Transaction receiver (TC contract or proxy). | Ethereum address |
-| `value` | Transfer value. | Decimal |
-| `asset` | Asset transferred. | String |
-| `category` | Transaction category (`external`, `internal`). | String |
-| `gas_limit` | Gas limit. | Integer |
-| `gas_price` | Gas price in wei. | Integer |
-| `max_fee_per_gas` | Max fee per gas (EIP-1559). | Integer |
-| `max_priority_fee_per_gas` | Max priority fee per gas (EIP-1559). | Integer |
-| `effectivegasprice` | Effective gas price paid. | Integer |
-| `gasused` | Gas used by transaction. | Integer |
-| `nonce` | Transaction nonce. | Integer |
-| `transaction_index` | Transaction index in block. | Integer |
-| `input_data` | Transaction input data. | String |
-| `tx_type` | Transaction type (EIP-2718 typed transaction). | String |
-| `chain_id` | Chain ID. | Integer |
-| `none_relayer_caller_address` | Non-relayer caller if applicable. | Ethereum address or empty |
-| `gas_cost_ETH` | Total gas cost in ETH. | Decimal |
-
-## 4. `tornadocash_raw_withdrawal_transactions.csv`
-
-Raw withdrawal transactions associated with withdrawal recipient addresses in the linkage table.
-
-| Field | Meaning | Type / Format |
-|---|---|---|
-| `pool_name` | Pool name (`100ETH`, `10ETH`, `1ETH`, `0_1ETH`). | String |
-| `address_type` | Always `withdrawal_address`. | String |
-| `target_address` | The withdrawal recipient address being described. | Ethereum address |
-| `unique_id` | Unique transaction identifier combining tx_hash and category. | String |
-| `block_num` | Ethereum block number. | Integer |
-| `block_timestamp` | Block timestamp. | Timestamp |
-| `tx_hash` | Transaction hash. | Transaction hash |
-| `from_address` | Transaction sender. | Ethereum address |
-| `to_address` | Transaction receiver (TC contract or proxy). | Ethereum address |
-| `value` | Transfer value. | Decimal |
-| `asset` | Asset transferred. | String |
-| `category` | Transaction category (`external`, `internal`). | String |
-| `gas_limit` | Gas limit. | Integer |
-| `gas_price` | Gas price in wei. | Integer |
-| `max_fee_per_gas` | Max fee per gas (EIP-1559). | Integer |
-| `max_priority_fee_per_gas` | Max priority fee per gas (EIP-1559). | Integer |
-| `effectivegasprice` | Effective gas price paid. | Integer |
-| `gasused` | Gas used by transaction. | Integer |
-| `nonce` | Transaction nonce. | Integer |
-| `transaction_index` | Transaction index in block. | Integer |
-| `input_data` | Transaction input data. | String |
-| `tx_type` | Transaction type (EIP-2718 typed transaction). | String |
-| `chain_id` | Chain ID. | Integer |
-| `none_relayer_caller_address` | Non-relayer caller if applicable. | Ethereum address or empty |
-| `gas_cost_ETH` | Total gas cost in ETH. | Decimal |
-
-## 5. `tornadocash_deposit_address_onestep_trace_history.csv`
-
-One-hop trace history for deposit addresses in the linkage table. Captures transactions where the deposit address appears as sender or receiver, including internal and proxy interactions.
-
-| Field | Meaning | Type / Format |
-|---|---|---|
-| `address_type` | Always `deposit_address`. | String |
-| `target_address` | The deposit address being described. | Ethereum address |
-| `unique_id` | Unique transaction identifier combining tx_hash, category, and trace index. | String |
-| `transaction_type` | Type: `deposit`, `proxy_deposit`, or `withdraw`. | String |
-| `direction` | Transfer direction: `transfer_in` or `transfer_out`. | String |
-| `block_num` | Ethereum block number. | Integer |
-| `block_timestamp` | Block timestamp. | Timestamp |
-| `tx_hash` | Transaction hash. | Transaction hash |
-| `from_address` | Transfer source address. | Ethereum address |
-| `to_address` | Transfer destination address. | Ethereum address |
-| `value` | Transfer value. | Decimal |
-| `asset` | Asset transferred. | String |
-| `category` | Transaction category (`external`, `internal`). | String |
-
-## 6. `tornadocash_withdrawal_address_onestep_trace_history.csv`
-
-One-hop trace history for withdrawal recipient addresses in the linkage table. Captures transactions where the withdrawal address appears as sender or receiver.
-
-| Field | Meaning | Type / Format |
-|---|---|---|
-| `address_type` | Always `withdrawal_address`. | String |
-| `target_address` | The withdrawal recipient address being described. | Ethereum address |
-| `unique_id` | Unique transaction identifier combining tx_hash, category, and trace index. | String |
-| `transaction_type` | Type: `deposit`, `proxy_deposit`, or `withdraw`. | String |
-| `direction` | Transfer direction: `transfer_in` or `transfer_out`. | String |
-| `block_num` | Ethereum block number. | Integer |
-| `block_timestamp` | Block timestamp. | Timestamp |
-| `tx_hash` | Transaction hash. | Transaction hash |
-| `from_address` | Transfer source address. | Ethereum address |
-| `to_address` | Transfer destination address. | Ethereum address |
-| `value` | Transfer value. | Decimal |
-| `asset` | Asset transferred. | String |
-| `category` | Transaction category (`external`, `internal`). | String |
-
 ## Usage Notes
 
 - `withdraw_address` denotes the withdrawal recipient address, not necessarily the transaction sender of the withdrawal transaction.
@@ -265,4 +157,3 @@ One-hop trace history for withdrawal recipient addresses in the linkage table. C
 - The dataset is organized around address-pair linkage evidence. It should not be interpreted as direct identity attribution.
 - For reproducibility, users should preserve the relationship between the main table and the detail table through `id` and `trace_id`.
 - For evaluation tasks, we recommend reporting results separately by `clue_type`, because direct linkage, gas funding linkage, and transaction-intensity linkage represent different evidence strengths and coverage profiles.
-- Raw transaction files and one-hop trace history files provide supplementary context for addresses appearing in the linkage table. These can be used for deeper forensic analysis or to verify the evidence chain behind specific linkage records.
