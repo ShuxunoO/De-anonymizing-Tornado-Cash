@@ -1,0 +1,11 @@
+{
+    "TornadoCash_0_1ETH_pool_address": "0x12D66f87A04A9E220743712cE6d9bB1B5616B8Fc",
+    "TornadoCash_1ETH_pool_address": "0x47CE0C6eD5B0Ce3d3A51fdb1C52DC66a7c3c2936",
+    "TornadoCash_10ETH_pool_address": "0x910Cbd523D972eb0a6f4cAe4618aD62622b39DbF",
+    "TornadoCash_100ETH_pool_address": "0xA160cdAB225685dA1d56aa342Ad8841c3b53f291",
+    "TornadoCash_100ETH_Deposit.xlsx": [
+        "TornadoCash_Old_Proxy： 0x905b63fff465b9ffbf41dea908ceb12478ec7601",
+        "TornadoCash_NewProxy： 0x722122df12d4e14e13ac3b6895a86e84145b6967",
+        "TornadoRouter： 0xd90e2f925da726b50c4ed8d0fb90ad053324f31b"
+    ]
+}

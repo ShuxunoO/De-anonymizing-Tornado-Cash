@@ -1,0 +1,450 @@
+{
+  "schema_version": "v1alpha2",
+  "run_id": "20260425T095232Z",
+  "generated_at": "2026-04-25T09:53:09Z",
+  "inputs": {
+    "clues": {
+      "path": "/mnt/nas/shuxun/TC_data_v2/tornadocash_onestep_clues.csv",
+      "bytes": 4131370
+    },
+    "deposit_history": {
+      "path": "/mnt/nas/shuxun/TC_data_v2/tornadocash_deposit_address_onestep_trace_history.csv",
+      "bytes": 462952658
+    },
+    "raw_deposits": {
+      "path": "/mnt/nas/shuxun/TC_data_v2/tornadocash_raw_deposit_transactions.csv",
+      "bytes": 24371428
+    },
+    "raw_withdrawals": {
+      "path": "/mnt/nas/shuxun/TC_data_v2/tornadocash_raw_withdrawal_transactions.csv",
+      "bytes": 112473588
+    },
+    "withdrawal_history": {
+      "path": "/mnt/nas/shuxun/TC_data_v2/tornadocash_withdrawal_address_onestep_trace_history.csv",
+      "bytes": 108600982
+    }
+  },
+  "tables": [
+    {
+      "name": "clues",
+      "category": "normalized",
+      "path": "normalized/clues.parquet",
+      "rows": 10853,
+      "primary_key": [
+        "id"
+      ],
+      "columns": [
+        "id",
+        "pool_name",
+        "pool_value_eth",
+        "clue",
+        "deposit_address",
+        "withdraw_address",
+        "deposit_num",
+        "first_deposit_hash",
+        "first_deposit_timestamp",
+        "last_deposit_timestamp",
+        "withdraw_num",
+        "first_withdraw_hash",
+        "first_withdraw_timestamp",
+        "last_withdraw_timestamp"
+      ]
+    },
+    {
+      "name": "deposit_events",
+      "category": "normalized",
+      "path": "normalized/deposit_events.parquet",
+      "rows": 33135,
+      "primary_key": [
+        "pool_name",
+        "deposit_address",
+        "tx_hash"
+      ],
+      "columns": [
+        "pool_name",
+        "deposit_address",
+        "tx_hash",
+        "block_num",
+        "block_timestamp",
+        "value_eth",
+        "record_count",
+        "category_count"
+      ]
+    },
+    {
+      "name": "withdraw_events",
+      "category": "normalized",
+      "path": "normalized/withdraw_events.parquet",
+      "rows": 73807,
+      "primary_key": [
+        "pool_name",
+        "withdraw_address",
+        "tx_hash"
+      ],
+      "columns": [
+        "pool_name",
+        "withdraw_address",
+        "tx_hash",
+        "block_num",
+        "block_timestamp",
+        "value_eth",
+        "record_count",
+        "category_count"
+      ]
+    },
+    {
+      "name": "clue_event_consistency",
+      "category": "features",
+      "path": "features/clue_event_consistency.parquet",
+      "rows": 10853,
+      "primary_key": [
+        "id"
+      ],
+      "columns": [
+        "id",
+        "pool_name",
+        "deposit_address",
+        "withdraw_address",
+        "deposit_num",
+        "deposit_event_count",
+        "observed_first_deposit",
+        "observed_last_deposit",
+        "deposit_count_matches",
+        "withdraw_num",
+        "withdraw_event_count",
+        "observed_first_withdraw",
+        "observed_last_withdraw",
+        "withdraw_count_matches"
+      ]
+    },
+    {
+      "name": "deposit_funding",
+      "category": "features",
+      "path": "features/deposit_funding.parquet",
+      "rows": 32964,
+      "primary_key": [
+        "pool_name",
+        "deposit_address",
+        "deposit_tx_hash"
+      ],
+      "columns": [
+        "pool_name",
+        "deposit_address",
+        "deposit_tx_hash",
+        "deposit_timestamp",
+        "deposit_value_eth",
+        "recent_in_gap_seconds",
+        "dominant_inflow_gap_seconds",
+        "funding_span_approx_seconds",
+        "multi_funding_count",
+        "funding_complete_approx"
+      ]
+    },
+    {
+      "name": "candidate_gaps",
+      "category": "features",
+      "path": "features/candidate_gaps.parquet",
+      "rows": 1550888,
+      "primary_key": [
+        "clue_id",
+        "deposit_tx_hash",
+        "withdraw_tx_hash"
+      ],
+      "columns": [
+        "clue_id",
+        "pool_name",
+        "clue",
+        "deposit_address",
+        "withdraw_address",
+        "deposit_tx_hash",
+        "withdraw_tx_hash",
+        "gap_seconds"
+      ]
+    },
+    {
+      "name": "nearest_forward_gaps",
+      "category": "features",
+      "path": "features/nearest_forward_gaps.parquet",
+      "rows": 75922,
+      "primary_key": [
+        "clue_id",
+        "deposit_tx_hash",
+        "withdraw_tx_hash"
+      ],
+      "columns": [
+        "clue_id",
+        "pool_name",
+        "clue",
+        "deposit_address",
+        "withdraw_address",
+        "deposit_tx_hash",
+        "withdraw_tx_hash",
+        "gap_seconds"
+      ]
+    },
+    {
+      "name": "temporal_matching_gaps",
+      "category": "features",
+      "path": "features/temporal_matching_gaps.parquet",
+      "rows": 25279,
+      "primary_key": [
+        "clue_id",
+        "deposit_tx_hash",
+        "withdraw_tx_hash"
+      ],
+      "columns": [
+        "clue_id",
+        "pool_name",
+        "clue",
+        "deposit_address",
+        "withdraw_address",
+        "deposit_tx_hash",
+        "withdraw_tx_hash",
+        "gap_seconds"
+      ]
+    },
+    {
+      "name": "window_overlap",
+      "category": "features",
+      "path": "features/window_overlap.parquet",
+      "rows": 10853,
+      "primary_key": [
+        "id"
+      ],
+      "columns": [
+        "id",
+        "pool_name",
+        "clue",
+        "deposit_address",
+        "withdraw_address",
+        "deposit_first_timestamp",
+        "deposit_last_timestamp",
+        "withdraw_first_timestamp",
+        "withdraw_last_timestamp",
+        "deposit_event_count",
+        "withdraw_event_count",
+        "window_overlap_seconds",
+        "window_relation"
+      ]
+    },
+    {
+      "name": "withdraw_release",
+      "category": "features",
+      "path": "features/withdraw_release.parquet",
+      "rows": 8335,
+      "primary_key": [
+        "pool_name",
+        "withdraw_address",
+        "withdraw_tx_hash"
+      ],
+      "columns": [
+        "pool_name",
+        "withdraw_address",
+        "withdraw_tx_hash",
+        "withdraw_timestamp",
+        "withdraw_value_eth",
+        "first_out_gap_seconds",
+        "half_release_gap_approx_seconds",
+        "full_release_gap_approx_seconds",
+        "outflow_counterparty_count",
+        "release_complete_approx",
+        "remaining_value_eth_approx"
+      ]
+    },
+    {
+      "name": "edge_structure",
+      "category": "features",
+      "path": "features/edge_structure.parquet",
+      "rows": 10853,
+      "primary_key": [
+        "component_id",
+        "pool_name",
+        "deposit_address",
+        "withdraw_address"
+      ],
+      "columns": [
+        "component_id",
+        "pool_name",
+        "deposit_address",
+        "withdraw_address",
+        "clues",
+        "out_degree",
+        "in_degree",
+        "structure_class"
+      ]
+    },
+    {
+      "name": "component_summary",
+      "category": "features",
+      "path": "features/component_summary.parquet",
+      "rows": 5714,
+      "primary_key": [
+        "component_id"
+      ],
+      "columns": [
+        "component_id",
+        "deposit_address_count",
+        "withdraw_address_count",
+        "edge_count",
+        "component_edge_density",
+        "pool_coverage",
+        "distinct_clue_types",
+        "clue_types"
+      ]
+    },
+    {
+      "name": "role_reuse",
+      "category": "features",
+      "path": "features/role_reuse.parquet",
+      "rows": 7759,
+      "primary_key": [
+        "address"
+      ],
+      "columns": [
+        "address",
+        "pool_diversity",
+        "roles_used",
+        "role_count",
+        "cross_pool_role_consistency"
+      ]
+    },
+    {
+      "name": "address_tc_rhythm",
+      "category": "features",
+      "path": "features/address_tc_rhythm.parquet",
+      "rows": 13767,
+      "primary_key": [
+        "pool_name",
+        "role",
+        "address"
+      ],
+      "columns": [
+        "pool_name",
+        "role",
+        "address",
+        "event_count",
+        "first_event_timestamp",
+        "last_event_timestamp",
+        "span_seconds",
+        "min_interarrival_seconds",
+        "median_interarrival_seconds",
+        "mean_interarrival_seconds",
+        "max_interarrival_seconds",
+        "burstiness"
+      ]
+    },
+    {
+      "name": "address_lifecycle",
+      "category": "features",
+      "path": "features/address_lifecycle.parquet",
+      "rows": 7876,
+      "primary_key": [
+        "role",
+        "address"
+      ],
+      "columns": [
+        "role",
+        "address",
+        "first_seen_timestamp_filtered",
+        "last_seen_timestamp_filtered",
+        "first_tc_timestamp",
+        "last_tc_timestamp",
+        "filtered_age_before_first_tc_seconds",
+        "filtered_activity_after_last_tc_seconds",
+        "is_fresh_in_filtered_view",
+        "tc_reuse_count",
+        "post_tc_tx_count",
+        "total_filtered_tx_count",
+        "single_purpose_score"
+      ]
+    },
+    {
+      "name": "cross_pool_component_summary",
+      "category": "features",
+      "path": "features/cross_pool_component_summary.parquet",
+      "rows": 4902,
+      "primary_key": [
+        "component_id"
+      ],
+      "columns": [
+        "component_id",
+        "deposit_address_count",
+        "withdraw_address_count",
+        "edge_count",
+        "component_edge_density",
+        "pool_coverage",
+        "distinct_clue_types",
+        "clue_types"
+      ]
+    },
+    {
+      "name": "cross_pool_component_membership",
+      "category": "features",
+      "path": "features/cross_pool_component_membership.parquet",
+      "rows": 11959,
+      "primary_key": [
+        "component_id",
+        "role",
+        "address"
+      ],
+      "columns": [
+        "component_id",
+        "role",
+        "address",
+        "pool_diversity",
+        "pools_used"
+      ]
+    },
+    {
+      "name": "deposit_counterparties",
+      "category": "features",
+      "path": "features/deposit_counterparties.parquet",
+      "rows": 5890,
+      "primary_key": [
+        "deposit_address"
+      ],
+      "columns": [
+        "deposit_address",
+        "filtered_upstream_count",
+        "filtered_upstream_total_eth",
+        "filtered_upstream_hhi",
+        "filtered_upstream_top1_share",
+        "filtered_upstream_top3_share"
+      ]
+    },
+    {
+      "name": "withdraw_counterparties",
+      "category": "features",
+      "path": "features/withdraw_counterparties.parquet",
+      "rows": 1176,
+      "primary_key": [
+        "withdraw_address"
+      ],
+      "columns": [
+        "withdraw_address",
+        "filtered_downstream_count",
+        "filtered_downstream_total_eth",
+        "filtered_downstream_hhi",
+        "filtered_downstream_top1_share",
+        "filtered_downstream_top3_share"
+      ]
+    },
+    {
+      "name": "component_counterparty_overlap",
+      "category": "features",
+      "path": "features/component_counterparty_overlap.parquet",
+      "rows": 5714,
+      "primary_key": [
+        "component_id"
+      ],
+      "columns": [
+        "component_id",
+        "shared_upstream_ratio",
+        "shared_downstream_ratio",
+        "upstream_jaccard_similarity",
+        "downstream_jaccard_similarity",
+        "component_counterparty_reuse"
+      ]
+    }
+  ]
+}

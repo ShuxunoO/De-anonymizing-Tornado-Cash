@@ -1,20 +1,191 @@
+# Tornado Cash Linkage Detection and Empirical Analysis
 
-## Overview
+This repository contains the complete pipeline, dataset, and empirical analysis for detecting Tornado Cash (TC) deposit-withdrawal address linkages and analyzing behavioral patterns around the mixer.
 
-The Tornado Cash Linkage Dataset provides high-confidence deposit-withdrawal linkage evidence for Tornado Cash (TC) on Ethereum. The dataset is built from interpretable linkage patterns mined from real transaction histories of three key TC-related address roles: deposit addresses, withdrawal recipients, and withdrawal initiators.
+## Table of Contents
 
-The dataset is designed as a research artifact for mixer forensics, anonymity evaluation, address-linkage benchmarking, and downstream fund-tracing studies. Unlike small manually curated case sets or weak labels derived from a single heuristic, this dataset records explicit deposit-recipient address pairs together with the transaction-level evidence supporting each linkage. It therefore supports both quantitative evaluation and evidence-chain inspection.
+- [Project Overview](#project-overview)
+- [Pipeline Overview](#pipeline-overview)
+- [Script Reference](#script-reference)
+- [Dataset](#dataset)
+- [Empirical Analysis](#empirical-analysis)
+- [Quick Start](#quick-start)
 
-The release contains two CSV files:
+---
 
-| File | Rows | Description |
-|---|---:|---|
-| `tornadocash_onestep_clues.csv` | 10,853 | Main linkage table. Each row records one high-confidence linkage between a TC deposit address and a withdrawal recipient address. |
-| `tornadocash_onestep_clues_details.csv` | 25,615 | Evidence-detail table. Each row records an on-chain transaction step associated with a linkage record in the main table. |
+## Project Overview
 
-## Dataset Scope
+Tornado Cash uses zero-knowledge proofs to break the on-chain linkage between deposit and withdrawal addresses on Ethereum. Existing forensic methods rely on shallow heuristics (gas fees, temporal proximity, amount similarity, ENS ownership) that depend on subjective assumptions. This project provides:
 
-The main table covers four ETH-denominated Tornado Cash pools:
+1. **A multidimensional linkage detection method** — leveraging historical transaction patterns of deposit addresses, withdrawal recipients, and withdrawal initiators to identify high-confidence linkage clues.
+2. **The Tornado Cash Linkage Dataset** — 10,853 high-confidence deposit-withdrawal address pairs with transaction-level evidence.
+3. **Empirical analysis** — structural, temporal, and counterparty behavioral patterns around TC usage.
+
+---
+
+## Pipeline Overview
+
+The detection pipeline consists of **10 stages**, from raw blockchain data collection to final clue export.
+
+```
+Stage 1-2          Raw transaction data collection (pool + router contracts)
+Stage 3            Non-relayer withdrawal initiator extraction
+Stage 4            Valid address extraction (deposit / proxy deposit / none-relayer caller)
+Stage 5            One-hop transfer trace fetching
+Stage 6            Statistical address set computation
+Stage 7            Direct linkage clue detection (a1, c1)
+Stage 8            Gas funding linkage detection (BTFI algorithm)
+Stage 9            Transaction-intensity linkage detection (VATI algorithm)
+Stage 10           Clue verification and final export
+```
+
+### Data Flow
+
+```
+Alchemy API
+    ↓
+[Stage 1-2] Raw TC deposit/withdraw tables (pool + router contracts)
+    ↓
+[Stage 3] none_relayer_caller_address via Trace API
+    ↓
+[Stage 4] Valid addresses extracted → JSON address lists
+    ↓
+[Stage 5] One-hop trace fetching (ETH + ERC-20) → onestep trace tables
+    ↓
+[Stage 6] statistical_clues.py → address set statistics JSON
+    ↓
+[Stage 7] sort_out_clues.py → direct clues (a1, c1)
+[Stage 8] BTFI_gas_funding_detection.py → gas funding clues (gf_1, gf_2)
+[Stage 9] VATI_detection.py → transaction-intensity clues (ti_1, ti_2)
+    ↓
+[Stage 10] verify_results.py → DB verification
+          get_final_output_onestep_clues.py → final export (CSV + dataset)
+```
+
+---
+
+## Script Reference
+
+### Data Collection
+
+**[`code/get_tornadoCash_gas_data_by_Alchemy_multithreading.py`](code/get_tornadoCash_gas_data_by_Alchemy_multithreading.py)**
+Fetches all TC-related transactions from Alchemy API for pool contracts (`0xA160...`) and router contracts (`0xd90e...`). Supports multi-threaded API key rotation. Constructs raw deposit/withdraw transfer tables per pool.
+
+**[`code/get_internal_transfer_caller.py`](code/get_internal_transfer_caller.py)**
+Queries the Alchemy Trace API to find the actual transaction initiator (caller) for each TC withdrawal. Distinguishes relayer-initiated transactions from direct user-initiated ones, extracting `none_relayer_caller_address`.
+
+---
+
+### Address Extraction
+
+**[`code/get_tornado_cash_deposit_withdraw_caller_address.py`](code/get_tornado_cash_deposit_withdraw_caller_address.py)**
+Consolidates Stages 4.1–4.3 into a single script. Extracts:
+- **Deposit addresses** from pool deposit transfer tables (`from_address`)
+- **Proxy deposit addresses** from router tables (matched by `tx_hash` to pool deposit tables)
+- **Non-relayer withdrawal initiator addresses** from withdraw transfer tables
+
+Outputs JSON files per pool, e.g., `tornadocash_100eth_deposit_withdraw_address.json`.
+
+**[`code/filter_tornado_cash_proxy_address.py`](code/filter_tornado_cash_proxy_address.py)**
+Extracts valid proxy deposit addresses by matching router deposit transactions to pool deposit records via `tx_hash`. Distinguishes deposit addresses from withdrawal addresses in the router contract context.
+
+**[`code/build_exclude_address.py`](code/build_exclude_address.py)**
+Builds an exclusion address list for downstream analysis. Matches addresses against configurable keyword lists (e.g., exchange names, bridge contracts) to filter out known public infrastructure addresses.
+
+---
+
+### One-Hop Trace Fetching
+
+**[`code/get_deeper_trace_multithreads.py`](code/get_deeper_trace_multithreads.py)**
+For each address in the extracted address sets (deposit addresses, withdrawal recipients, non-relayer callers), fetches their one-hop incoming and outgoing transfers from the database. Filters by `category = 'external'` and `asset` in `["ETH", "USDC", "DAI", "WETH", "USDT", "TORN", "WBTC"]`. Results are stored in per-pool one-hop trace tables.
+
+---
+
+### Statistical Address Sets
+
+**[`code/statistical_clues.py`](code/statistical_clues.py)**
+Computes deduplicated address sets and transfer target sets for each pool:
+- `deposit_address`, `deposit_address_transfer_in/out_address`
+- `recipient_address`, `recipient_address_transfer_in/out_address`
+- `none_relayer_withdrawer_address`, `none_relayer_withdrawer_address_transfer_in/out_address`
+
+Outputs `*_onestep_transfer_in_out.json` files.
+
+---
+
+### Linkage Clue Detection
+
+**[`code/sort_out_clues.py`](code/sort_out_clues.py)**
+Detects **direct linkage clues** by set intersection:
+- `a1` (→ `dl_1`): `deposit_address ∩ recipient_address` — same address used for both deposit and withdrawal
+- `c1` (→ `dl_2`): `deposit_address ∩ none_relayer_withdrawer_address` — deposit address directly initiates withdrawal
+
+**[`code/BTFI_gas_funding_detection.py`](code/BTFI_gas_funding_detection.py)**
+Implements the **BTFI (Balance-Trough First-In) gas funding detection algorithm** to identify shared third-party gas funders:
+- `gf_1`: Deposit address and withdrawal recipient share the same gas funder (incoming address)
+- `gf_2`: Deposit address funds the withdrawal initiator (outgoing address → initiator)
+
+Outputs verified gas funding clues with confidence scores.
+
+**[`code/VATI_detection.py`](code/VATI_detection.py)**
+Implements the **VATI (Volume-And-Time Intensive) detection algorithm** to identify high-intensity transfer relationships:
+- `ti_1`: High-intensity transfers between deposit address and withdrawal recipient
+- `ti_2`: High-intensity transfers between deposit address and non-relayer withdrawal initiator
+
+Uses score thresholds: `score ≥ 0.9` for 2 transactions, `score ≥ 0.5` for 3–10 transactions, `score ≥ 0.4` for 11+ transactions.
+
+---
+
+### Clue Verification and Export
+
+**[`code/verify_results.py`](code/verify_results.py)**
+Verifies each detected clue against the raw database records. For each clue, validates that:
+1. Deposit records exist and are temporally valid (`deposit_timestamp < withdraw_timestamp`)
+2. Withdraw records exist and are valid
+3. Time constraints are satisfied
+
+Stores verified results in `one_step_trace_clues_gasfunding` tables.
+
+**[`code/filter_hgf_hotwallet_gasfunding.py`](code/filter_hgf_hotwallet_gasfunding.py)**
+Filters out incorrectly flagged exchange/service addresses from gas funding detection results. Checks `address_labels` table against keyword lists (EXCHANGE, DEX, SERVICES, etc.) and marks false positives with `verify_status = false`.
+
+**[`code/get_final_output_onestep_clues.py`](code/get_final_output_onestep_clues.py)**
+Final export script. Integrates clues from three source groups into a unified output schema:
+1. `public.one_step_trace_clues_gasfunding` → `direct_linkage` (`dl_1`, `dl_2`)
+2. `onestep_clues.one_step_trace_clues_gasfunding` → `gas_funding` (`gf_1`, `gf_2`)
+3. `onestep_clues.onestep_trace_clue_frequent_transation` → `transaction_intensity_linkage` (`ti_1`, `ti_2`)
+
+Performs:
+- Blacklist filtering (burn addresses)
+- Deduplication by `(deposit_address, withdraw_address)` pairs
+- Exports main clues CSV, detail traces CSV, raw deposit/withdrawal transactions, and one-hop trace histories
+
+---
+
+## Dataset
+
+For detailed documentation, see [`dataset/Tornado_Cash_Linkage_Dataset_introduction.md`](dataset/Tornado_Cash_Linkage_Dataset_introduction.md).
+
+### Files
+
+| File | Records | Description |
+|---|---|---|
+| `tornadocash_onestep_clues.csv` | 10,853 | Main linkage table |
+| `tornadocash_onestep_clues_details.csv` | 25,615 | Transaction-step evidence |
+| `tornadocash_raw_deposit_transactions.csv` | — | Raw deposit transactions |
+| `tornadocash_raw_withdrawal_transactions.csv` | — | Raw withdrawal transactions |
+| `tornadocash_deposit_address_onestep_trace_history.csv` | — | Deposit one-hop trace history |
+| `tornadocash_withdrawal_address_onestep_trace_history.csv` | — | Withdrawal one-hop trace history |
+
+### Linkage Categories
+
+| Category | Clue Types | Records |
+|---|---|---|
+| Direct linkage | `dl_1`, `dl_2` | 4,729 |
+| Gas funding linkage | `gf_1`, `gf_2` | 5,251 |
+| Transaction-intensity linkage | `ti_1`, `ti_2` | 873 |
+
+### Pool Coverage
 
 | Pool | Linkage Records |
 |---|---:|
@@ -23,136 +194,143 @@ The main table covers four ETH-denominated Tornado Cash pools:
 | `10ETH` | 2,273 |
 | `100ETH` | 869 |
 
-The dataset integrates three broad linkage categories:
+---
 
-| Linkage Category | `clue` Value | Records |
-|---|---|---:|
-| Direct linkage | `direct_linkage` | 4,729 |
-| Gas funding linkage | `gas_funding` | 5,251 |
-| Transaction-intensity linkage | `transaction_intensity_linkage` | 873 |
+## Empirical Analysis
 
-## `clue_type` Taxonomy
+For the complete analysis narrative, see [`analysis/Introduction.md`](analysis/Introduction.md).
 
-The `clue_type` field specifies the concrete linkage pattern used to generate a record. The taxonomy is intentionally interpretable: each type corresponds to a rule family that can be inspected from transaction history.
+### Analysis Framework
 
-| `clue_type` | Category | Count | Meaning |
-|---|---|---:|---|
-| `dl_1` | Direct linkage | 4,636 | Deposit-recipient address reuse. The deposit address and withdrawal recipient are the same address. |
-| `dl_2` | Direct linkage | 93 | Deposit-initiator linkage. The deposit address also appears as a non-relayer withdrawal initiator, linking it to the withdrawal recipient specified in that withdrawal. |
-| `gf_1` | Gas funding linkage | 4,910 | Shared third-party gas funding. The deposit address and withdrawal recipient receive gas funding from the same third-party funding address. |
-| `gf_2` | Gas funding linkage | 341 | Deposit-to-initiator gas funding. The deposit address funds the withdrawal initiator so that the initiator can submit the withdrawal transaction. |
-| `ti_1` | Transaction-intensity linkage | 792 | High-intensity transfers between the deposit address and the withdrawal recipient. |
-| `ti_2` | Transaction-intensity linkage | 81 | High-intensity transfers between the deposit address and the non-relayer withdrawal initiator. |
+The empirical analysis operates on a **filtered private ETH interaction subgraph** with three complementary perspectives:
 
-These clue types should be interpreted as high-confidence behavioral linkage evidence, not as cryptographic proof of common ownership. For forensic or compliance use, the records should be combined with independent evidence and explicit assumptions.
+1. **Structural organization** — Pool-level bipartite graph classification (1-to-1, 1-to-many, many-to-1, many-to-many)
+2. **Temporal behavior** — Three-stage decomposition: pre-TC funding → in-pool dwell time → post-withdrawal release
+3. **Counterparty neighborhood** — One-hop private counterparty breadth and value concentration around withdrawal recipients
 
-## Linkage Pattern Figures
+### Key Findings
 
-The following figures illustrate the main linkage patterns used to construct the dataset. The image paths are relative to this documentation file.
+- **Graph structure**: 1-to-1 edges account for 46.6% of all edges; many-to-many edges account for 38.5%. The largest component contains 35 deposit addresses, 59 withdrawal recipients, and 644 linkage edges — a head-simple, tail-complex pattern.
+- **Temporal latency**: The median `funding_span_approx` is ~96 days (pre-TC), ~39 days in-pool (temporal matching gap), and ~173 days post-withdrawal (full release gap). TC behaves as a temporal latency stack.
+- **Post-TC funnel**: 70% of withdrawal events touch at most 1 downstream counterparty during release scans. The median downstream top-3 value share is 100%. Funds released after TC often route through a narrow funnel, supporting downstream investigation.
 
-### Direct Linkage
+### Analysis Artifacts
 
-![Direct Linkage Pattern](assets/DL.png)
+- [`analysis/02_overview_analysis.ipynb`](analysis/02_overview_analysis.ipynb) — Jupyter notebook for exploratory data analysis and visualization
+- [`analysis/docs/`](analysis/docs/) — Framework documentation and section drafts
 
-Direct linkage captures the strongest evidence patterns. In `dl_1`, the deposit address is reused as the withdrawal recipient. In `dl_2`, the deposit address directly appears as a non-relayer withdrawal initiator, which links it to the withdrawal recipient specified in that withdrawal.
+---
 
-### Gas Funding Linkage
+## Quick Start
 
-![Gas Funding Linkage](assets/GF.png)
+### Prerequisites
 
-Gas funding linkage captures relationships revealed by ETH funding used to pay transaction fees. In `gf_1`, the deposit address and withdrawal recipient share the same third-party gas funder. In `gf_2`, the deposit address funds the withdrawal initiator that submits the withdrawal transaction.
+- Python 3.8+
+- PostgreSQL database with TC transaction data
+- Alchemy API key for blockchain data fetching
 
-### Transaction-Intensity Linkage
+### Database Configuration
 
-![Transaction-Intensity Linkage](assets/TI.png)
+Set up connection parameters in [`code/config/config.py`](code/config/config.py):
 
-Transaction-intensity linkage captures high-strength interactions in transaction history. In `ti_1`, the deposit address and withdrawal recipient have high-intensity transfers. In `ti_2`, the deposit address and non-relayer withdrawal initiator have high-intensity transfers, and the initiator is linked to the withdrawal recipient specified in the TC withdrawal.
+```python
+# Database connection settings
+DB_HOST = "your_postgres_host"
+DB_PORT = 5432
+DB_NAME = "tornadocash_db"
+DB_USER = "your_user"
+DB_PASSWORD = "your_password"
 
-### Pool-Level Linkage Structures
+# Alchemy API configuration
+ALCHEMY_API_KEYS = [...]
+ALCHEMY_API_KEY_FILE = "path/to/api_keys.txt"
 
-![Pool-level N-M Linkage Structure](assets/n-m.png)
-
-The pool-level linkage graph is built as a bipartite graph between deposit addresses and withdrawal recipients. A `1-1` edge connects one deposit address to one withdrawal recipient. `1-N`, `N-1`, and `N-M` structures capture repeated use, aggregation, dispersion, or coordinated behavior across multiple linked addresses.
-
-## 1. `tornadocash_onestep_clues.csv`
-
-This is the main linkage table. Each row describes one linked address pair in a specific TC pool. The row records the linkage source, linkage subtype, confidence-related statistics, deposit and withdrawal activity summaries, and optional remarks.
-
-| Field | Meaning | Type / Format | Example |
-|---|---|---|---|
-| `id` | Unique identifier of the linkage record. This field is referenced by `trace_id` in the detail table. | Integer | `2` |
-| `pool_name` | Tornado Cash pool associated with the linkage. | String: `100ETH`, `10ETH`, `1ETH`, or `0_1ETH` | `100ETH` |
-| `clue` | Broad linkage category. | String: `direct_linkage`, `gas_funding`, or `transaction_intensity_linkage` | `direct_linkage` |
-| `clue_type` | Concrete linkage subtype. See the taxonomy above. | String: `dl_1`, `dl_2`, `gf_1`, `gf_2`, `ti_1`, or `ti_2` | `dl_1` |
-| `deposit_address` | Address identified on the deposit side of the linkage. | Ethereum address | `0x159b...c2e6` |
-| `withdraw_address` | Withdrawal recipient address identified on the withdrawal side of the linkage. This is the recipient of withdrawn funds, not necessarily the transaction sender. | Ethereum address | `0x159b...c2e6` |
-| `score` | Confidence score or rule score when available. Some direct-linkage records do not require a score and leave this field empty. | Decimal or empty | `0.5000` |
-| `total_tx_count` | Number of transactions used by scoring or intensity statistics when available. | Integer or empty | `22` |
-| `total_usd_value` | Total historical USD value associated with the linkage evidence when available. | Decimal or empty | `4343694.66` |
-| `deposit_num` | Number of TC deposit transactions associated with the deposit address in this pool-level linkage context. | Integer | `21` |
-| `first_deposit_hash` | Hash of the earliest TC deposit transaction associated with this linkage. | Transaction hash | `0x88ff...5964` |
-| `first_deposit_timestamp` | Timestamp of the earliest associated TC deposit transaction. | Timestamp | `2021-02-20 01:48:16` |
-| `last_deposit_timestamp` | Timestamp of the latest associated TC deposit transaction. | Timestamp | `2021-03-29 05:10:28` |
-| `withdraw_num` | Number of TC withdrawal transactions associated with the withdrawal recipient in this pool-level linkage context. | Integer | `20` |
-| `first_withdraw_hash` | Hash of the earliest TC withdrawal transaction associated with this linkage. | Transaction hash | `0x3d6f...b2af` |
-| `first_withdraw_timestamp` | Timestamp of the earliest associated TC withdrawal transaction. | Timestamp | `2021-03-29 02:52:49` |
-| `last_withdraw_timestamp` | Timestamp of the latest associated TC withdrawal transaction. | Timestamp | `2021-05-02 05:48:11` |
-| `verify_status` | Whether the linkage passed the dataset-generation validation step. PostgreSQL exports `true` as `t`. | Boolean-like string | `t` |
-| `created_at` | Timestamp when the linkage record was written to the final output table. | Timestamp | `2026-02-03 14:52:15.870763` |
-| `remark` | Optional auxiliary information, such as detection direction, bidirectionality, transaction count, or USD-value statistics. | Text or empty | `dir: ..., total_tx: 22, total_usd: ...` |
-
-## 2. `tornadocash_onestep_clues_details.csv`
-
-This is the evidence-detail table. It records transaction-level evidence associated with linkage records in the main table. A single linkage record may correspond to multiple detail rows.
-
-The relationship between the two tables is:
-
-```text
-tornadocash_onestep_clues.id = tornadocash_onestep_clues_details.trace_id
+# Data output directory
+tornadocash_data_dir = "/path/to/output/data"
 ```
 
-| Field | Meaning | Type / Format | Example |
-|---|---|---|---|
-| `id` | Unique identifier of the detail record. | Integer | `7083` |
-| `trace_id` | Linkage record ID in `tornadocash_onestep_clues.csv`. | Integer | `6083` |
-| `step_order` | Order of the transaction step within the evidence path. Some records use compound orders such as `1-1` and `2-1` to preserve side-specific or multi-step evidence. | String | `1` |
-| `block_num` | Ethereum block number containing the transaction. | Integer | `11399001` |
-| `block_timestamp` | Block timestamp. | Timestamp | `2020-12-06 11:52:13` |
-| `tx_hash` | Hash of the on-chain transaction used as evidence. | Transaction hash | `0xc883...21a8` |
-| `from_address` | Sender, caller, or transfer source address for this transaction step. | Ethereum address | `0xa160...f291` |
-| `to_address` | Receiver, callee, or transfer destination address for this transaction step. | Ethereum address | `0x6949...9699` |
-| `value` | Transfer value in the unit indicated by `asset`. | Decimal | `100.0` |
-| `asset` | Asset transferred in this evidence step. | String | `ETH` |
-| `category` | Transaction or evidence category. Values include `external`, `internal`, `erc20`, and `gas_funding`. | String | `internal` |
-| `none_relayer_caller_address` | Non-relayer caller address identified for withdrawal-related evidence when available. The field name is kept as exported from the original pipeline. | Ethereum address or empty | `0x63ac...a1c9` |
-| `third_party_address` | Third-party address involved in the linkage pattern, such as a shared gas funder. Empty when not applicable. | Ethereum address or empty | `0x025b...5ac3` |
+### Running the Pipeline
 
-The `category` field in the detail table has the following distribution:
+```bash
+# 1. Fetch raw TC transactions (Stages 1-2)
+python code/get_tornadoCash_gas_data_by_Alchemy_multithreading.py
 
-| `category` | Records | Meaning |
-|---|---:|---|
-| `gas_funding` | 11,410 | Transaction step used as gas-funding evidence. |
-| `external` | 11,076 | Externally initiated Ethereum transaction. |
-| `erc20` | 2,936 | ERC-20 transfer or token-level evidence step. |
-| `internal` | 193 | Internal ETH transfer generated by contract execution. |
+# 2. Extract non-relayer caller addresses (Stage 3)
+python code/get_internal_transfer_caller.py
 
-The detail table contains multiple assets observed in linkage evidence:
+# 3. Extract valid addresses (Stage 4)
+python code/get_tornado_cash_deposit_withdraw_caller_address.py
 
-| Asset | Records |
-|---|---:|
-| `ETH` | 22,679 |
-| `USDC` | 1,073 |
-| `DAI` | 772 |
-| `USDT` | 411 |
-| `WETH` | 349 |
-| `WBTC` | 220 |
-| `TORN` | 111 |
+# 4. Fetch one-hop traces (Stage 5)
+python code/get_deeper_trace_multithreads.py
 
-## Usage Notes
+# 5. Compute statistical address sets (Stage 6)
+python code/statistical_clues.py
 
-- `withdraw_address` denotes the withdrawal recipient address, not necessarily the transaction sender of the withdrawal transaction.
-- `none_relayer_caller_address` is used to record a non-relayer withdrawal initiator when such an address can be identified.
-- Empty cells are exported as empty strings.
-- The dataset is organized around address-pair linkage evidence. It should not be interpreted as direct identity attribution.
-- For reproducibility, users should preserve the relationship between the main table and the detail table through `id` and `trace_id`.
-- For evaluation tasks, we recommend reporting results separately by `clue_type`, because direct linkage, gas funding linkage, and transaction-intensity linkage represent different evidence strengths and coverage profiles.
+# 6. Detect direct linkage clues (Stage 7)
+python code/sort_out_clues.py
+
+# 7. Detect gas funding linkage clues (Stage 8)
+python code/BTFI_gas_funding_detection.py
+
+# 8. Detect transaction-intensity linkage clues (Stage 9)
+python code/VATI_detection.py
+
+# 9. Verify clues against database
+python code/verify_results.py
+
+# 10. Export final output
+python code/get_final_output_onestep_clues.py
+```
+
+---
+
+## Project Structure
+
+```
+De-anonymizing-Tornado-Cash/
+├── README.md                          # This file
+├── assets/                            # Linkage pattern figures (DL.png, GF.png, TI.png, n-m.png)
+├── code/
+│   ├── BTFI_gas_funding_detection.py   # Gas funding linkage detection
+│   ├── VATI_detection.py               # Transaction-intensity linkage detection
+│   ├── build_exclude_address.py        # Exclusion list builder
+│   ├── filter_hgf_hotwallet_gasfunding.py  # Hot wallet false positive filtering
+│   ├── filter_tornado_cash_proxy_address.py  # Proxy address extraction
+│   ├── filter_tornadocash_address.py   # Legacy TC address extraction
+│   ├── get_deeper_trace_multithreads.py  # One-hop trace fetching
+│   ├── get_final_output_onestep_clues.py  # Final dataset export
+│   ├── get_internal_transfer_caller.py  # Non-relayer caller extraction
+│   ├── get_tornadoCash_gas_data_by_Alchemy_multithreading.py  # Raw TC data fetching
+│   ├── get_tornado_cash_deposit_withdraw_caller_address.py  # Consolidated address extraction
+│   ├── sort_out_clues.py               # Direct linkage clue detection
+│   ├── statistical_clues.py            # Statistical address set computation
+│   ├── verify_results.py               # Clue verification against DB
+│   ├── config/
+│   │   └── config.py                   # Configuration and paths
+│   └── util/
+│       ├── db_tools.py                 # Database connection utilities
+│       ├── fio.py                      # File I/O utilities
+│       └── log_tools.py                # Logging utilities
+├── dataset/
+│   ├── Tornado_Cash_Linkage_Dataset_introduction.md  # Dataset documentation
+│   ├── tornadocash_onestep_clues.csv   # Main linkage table
+│   ├── tornadocash_onestep_clues_details.csv  # Evidence detail table
+│   ├── tornadocash_raw_deposit_transactions.csv  # Raw deposit transactions
+│   ├── tornadocash_raw_withdrawal_transactions.csv  # Raw withdrawal transactions
+│   ├── tornadocash_deposit_address_onestep_trace_history.csv  # Deposit trace history
+│   └── tornadocash_withdrawal_address_onestep_trace_history.csv  # Withdrawal trace history
+├── analysis/
+│   ├── Introduction.md                 # Empirical analysis narrative
+│   ├── 02_overview_analysis.ipynb      # Exploratory analysis notebook
+│   ├── artifacts/                      # Analysis artifacts and section drafts
+│   └── docs/                           # Framework documentation
+```
+
+---
+
+## Citation
+
+If you use this dataset or methodology in your research, please cite:
+
+> Link to paper / dataset DOI when available.
