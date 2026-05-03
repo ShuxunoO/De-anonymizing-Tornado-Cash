@@ -21,7 +21,7 @@ from util import fio
 from util import db_tools
 
 
-OUT_PUT_DIR = "/Shuxun/AML_for_Blockchain/tornadocash_data/temp"
+OUT_PUT_DIR = "xxx/tornadocash_data/temp"
 POOL_KEYS = ["0_1", "1", "10", "100"]
 
 TORNADOCASH_DIRECT_TABLE_LIST = [

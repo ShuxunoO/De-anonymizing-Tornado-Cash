@@ -235,18 +235,18 @@ Set up connection parameters in [`code/config/config.py`](code/config/config.py)
 
 ```python
 # Database connection settings
-DB_HOST = "your_postgres_host"
+DB_HOST = "xxx"
 DB_PORT = 5432
-DB_NAME = "tornadocash_db"
-DB_USER = "your_user"
-DB_PASSWORD = "your_password"
+DB_NAME = "xxx"
+DB_USER = "xxx"
+DB_PASSWORD = "xxx"
 
 # Alchemy API configuration
 ALCHEMY_API_KEYS = [...]
-ALCHEMY_API_KEY_FILE = "path/to/api_keys.txt"
+ALCHEMY_API_KEY_FILE = "xxx"
 
 # Data output directory
-tornadocash_data_dir = "/path/to/output/data"
+tornadocash_data_dir = "xxx"
 ```
 
 ### Running the Pipeline
@@ -328,9 +328,3 @@ De-anonymizing-Tornado-Cash/
 ```
 
 ---
-
-## Citation
-
-If you use this dataset or methodology in your research, please cite:
-
-> Link to paper / dataset DOI when available.

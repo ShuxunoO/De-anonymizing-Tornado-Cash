@@ -42,7 +42,7 @@ ALCHEMY_KEYS = config.Alchemy_API_key_list
 EXCLUDED_ADDRESSES = set()
 try:
     EXCLUDED_ADDRESSES = set(addr.lower() for addr in fio.load_json(
-        "/Shuxun/AML_for_Blockchain/tornadocash_data/address_tags/exclude_address_by_key_words.json"
+        "xxx/tornadocash_data/address_tags/exclude_address_by_key_words.json"
     ))
 except Exception:
     pass
@@ -76,7 +76,7 @@ DEFAULT_BETA1 = 0.5
 DEFAULT_BETA2 = 0.5
 
 STABLECOINS = {'USDT', 'USDC', 'DAI', 'BUSD', 'TUSD', 'FRAX'}
-PRICE_CACHE_FILE = "/Shuxun/AML_for_Blockchain/data/price_cache.json"
+PRICE_CACHE_FILE = "xxx/data/price_cache.json"
 PRICE_CACHE = fio.load_json(PRICE_CACHE_FILE) or {}
 
 

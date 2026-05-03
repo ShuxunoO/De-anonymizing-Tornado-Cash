@@ -8,7 +8,7 @@
 2. 已重建出的存取款链接在线索图上呈现出怎样的结构模式。
 3. 这些链接如何帮助我们重建被 TC 打断的资金流局部结构，从而体现实际调查价值。
 
-结合 [answers-tc-analysis-framework.md](/data/home/workspace/misc/tc/docs/answers-tc-analysis-framework.md)，目前已经明确的约束如下：
+结合 [answers-tc-analysis-framework.md](xxx/docs/answers-tc-analysis-framework.md)，目前已经明确的约束如下：
 
 1. 线索表中的 `withdraw_address` 明确指 TC withdrawal 的 `recipient`，不是 relayer，也不是发起 withdrawal 的 caller。
 2. 线索表包含 `clue` 这种关联模式字段，但不把 `score` 当作置信度使用。

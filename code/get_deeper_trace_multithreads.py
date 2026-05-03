@@ -344,23 +344,23 @@ def get_deeper_trace_for_none_relayer_caller_address(file_paths):
 
 if __name__ == "__main__":
     tornadocash_pool_file_path = [
-        "/Shuxun/AML_for_Blockchain/tornadocash_data/tornadocash_100eth_deposit_withdraw_address.json",
-        "/Shuxun/AML_for_Blockchain/tornadocash_data/tornadocash_10eth_deposit_withdraw_address.json",
-        "/Shuxun/AML_for_Blockchain/tornadocash_data/tornadocash_1eth_deposit_withdraw_address.json",
-        "/Shuxun/AML_for_Blockchain/tornadocash_data/tornadocash_0_1eth_deposit_withdraw_address.json",
-        "/Shuxun/AML_for_Blockchain/tornadocash_data/tornadocash_proxy_router_100ETH_deposit_withdraw_address.json",
-        "/Shuxun/AML_for_Blockchain/tornadocash_data/tornadocash_proxy_router_10ETH_deposit_withdraw_address.json",
-        "/Shuxun/AML_for_Blockchain/tornadocash_data/tornadocash_proxy_router_1ETH_deposit_withdraw_address.json",
-        "/Shuxun/AML_for_Blockchain/tornadocash_data/tornadocash_proxy_router_0_1ETH_deposit_withdraw_address.json"
+        "xxx/tornadocash_data/tornadocash_100eth_deposit_withdraw_address.json",
+        "xxx/tornadocash_data/tornadocash_10eth_deposit_withdraw_address.json",
+        "xxx/tornadocash_data/tornadocash_1eth_deposit_withdraw_address.json",
+        "xxx/tornadocash_data/tornadocash_0_1eth_deposit_withdraw_address.json",
+        "xxx/tornadocash_data/tornadocash_proxy_router_100ETH_deposit_withdraw_address.json",
+        "xxx/tornadocash_data/tornadocash_proxy_router_10ETH_deposit_withdraw_address.json",
+        "xxx/tornadocash_data/tornadocash_proxy_router_1ETH_deposit_withdraw_address.json",
+        "xxx/tornadocash_data/tornadocash_proxy_router_0_1ETH_deposit_withdraw_address.json"
     ]
 
     get_deeper_trace_four_pools(tornadocash_pool_file_path)
 
     tornadocash_pool_file_path = [
-        "/Shuxun/AML_for_Blockchain/tornadocash_data/tornadocash_100eth_withdraw_transfers_none_relayer_caller_address.json",
-        "/Shuxun/AML_for_Blockchain/tornadocash_data/tornadocash_10eth_withdraw_transfers_none_relayer_caller_address.json",
-        "/Shuxun/AML_for_Blockchain/tornadocash_data/tornadocash_1eth_withdraw_transfers_none_relayer_caller_address.json",
-        "/Shuxun/AML_for_Blockchain/tornadocash_data/tornadocash_0_1eth_withdraw_transfers_none_relayer_caller_address.json"
+        "xxx/tornadocash_data/tornadocash_100eth_withdraw_transfers_none_relayer_caller_address.json",
+        "xxx/tornadocash_data/tornadocash_10eth_withdraw_transfers_none_relayer_caller_address.json",
+        "xxx/tornadocash_data/tornadocash_1eth_withdraw_transfers_none_relayer_caller_address.json",
+        "xxx/tornadocash_data/tornadocash_0_1eth_withdraw_transfers_none_relayer_caller_address.json"
     ]
 
     get_deeper_trace_for_none_relayer_caller_address(tornadocash_pool_file_path)

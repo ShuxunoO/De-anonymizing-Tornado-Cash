@@ -39,8 +39,8 @@ NORMALIZED_BLACK_ADDRESS_LIST = sorted({address.lower() for address in BLACK_ADD
 TARGET_MAIN_TABLE = "onestep_clues_output.tornadocash_onestep_clues"
 TARGET_DETAIL_TABLE = "onestep_clues_output.tornadocash_onestep_clues_details"
 OUTPUT_DIRECTORIES = [
-    "/Shuxun/AML_for_Blockchain/data/final_output",
-    "/mnt/nas/shuxun",
+    "xxx/data/final_output",
+    "xxx",
 ]
 EXPORT_FILENAMES = {
     "main": "tornadocash_onestep_clues.csv",

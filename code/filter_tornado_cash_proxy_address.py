@@ -69,7 +69,7 @@ if __name__ == "__main__":
         print("Database connection failed")
         exit(1)
 
-    tornadocash_data_dir = "/Shuxun/AML_for_Blockchain/tornadocash_data"
+    tornadocash_data_dir = "xxx/tornadocash_data"
     output_dir = os.path.join(tornadocash_data_dir, "onestep_clues_v2_gasfunding")
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)

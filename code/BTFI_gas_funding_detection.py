@@ -28,10 +28,10 @@ import os
 
 
 EXCLUDED_ADDRESSES = set(
-    fio.load_json("/Shuxun/AML_for_Blockchain/tornadocash_data/address_tags/exclude_address_by_key_words.json")
+    fio.load_json("xxx/tornadocash_data/address_tags/exclude_address_by_key_words.json")
 )
 
-GAS_COST_JSON_PATH = "/Shuxun/AML_for_Blockchain/code/data/cumulative_gas_cost.json"
+GAS_COST_JSON_PATH = "xxx/code/data/cumulative_gas_cost.json"
 
 WEIGHT_BALANCE = 0.5
 WEIGHT_AMOUNT = 0.5

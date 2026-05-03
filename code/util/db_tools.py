@@ -9,10 +9,10 @@ and executing queries with proper error handling and SQL injection prevention.
 import psycopg2
 
 
-DB_HOST = 'localhost'
+DB_HOST = 'xxx'
 DB_PORT = 5432
-DB_NAME = 'postgres'
-DB_USER = 'postgres'
+DB_NAME = 'xxx'
+DB_USER = 'xxx'
 DB_PASSWORD = 'xxx'
 
 
