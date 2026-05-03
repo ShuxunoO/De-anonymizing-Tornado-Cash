@@ -5,9 +5,9 @@ This repository contains the complete pipeline, dataset, and empirical analysis 
 ## Table of Contents
 
 - [Project Overview](#project-overview)
+- [Dataset](#dataset)
 - [Pipeline Overview](#pipeline-overview)
 - [Script Reference](#script-reference)
-- [Dataset](#dataset)
 - [Empirical Analysis](#empirical-analysis)
 - [Quick Start](#quick-start)
 
@@ -20,6 +20,75 @@ Tornado Cash uses zero-knowledge proofs to break the on-chain linkage between de
 1. **A multidimensional linkage detection method** — leveraging historical transaction patterns of deposit addresses, withdrawal recipients, and withdrawal initiators to identify high-confidence linkage clues.
 2. **The Tornado Cash Linkage Dataset** — 10,853 high-confidence deposit-withdrawal address pairs with transaction-level evidence.
 3. **Empirical analysis** — structural, temporal, and counterparty behavioral patterns around TC usage.
+
+---
+
+## Dataset
+
+For detailed documentation, see [`dataset/Tornado_Cash_Linkage_Dataset_introduction.md`](dataset/Tornado_Cash_Linkage_Dataset_introduction.md).
+
+### Project Links
+
+| Item | Project-relative path | Description |
+|---|---|---|
+| Dataset directory | [`dataset/`](dataset/) | Released linkage dataset and documentation |
+| Dataset documentation | [`dataset/Tornado_Cash_Linkage_Dataset_introduction.md`](dataset/Tornado_Cash_Linkage_Dataset_introduction.md) | Field definitions, taxonomy, figures, and usage notes |
+| Main linkage table | [`dataset/tornadocash_onestep_clues.csv`](dataset/tornadocash_onestep_clues.csv) | Deposit-withdrawal address pairs and linkage metadata |
+| Evidence detail table | [`dataset/tornadocash_onestep_clues_details.csv`](dataset/tornadocash_onestep_clues_details.csv) | Transaction-level evidence supporting each linkage record |
+
+### Address Linkage Patterns
+
+The dataset is built from three interpretable address-linkage patterns. Each pattern links Tornado Cash deposit addresses, withdrawal recipients, and non-relayer withdrawal initiators through observable transaction-history evidence. For full field definitions, examples, and usage notes, see the [dataset documentation](dataset/Tornado_Cash_Linkage_Dataset_introduction.md).
+
+#### Direct Linkage
+
+[![Direct Linkage Pattern](assets/DL.png)](dataset/Tornado_Cash_Linkage_Dataset_introduction.md#direct-linkage)
+
+Direct linkage captures the strongest evidence patterns. In `dl_1`, the deposit address is reused as the withdrawal recipient. In `dl_2`, the deposit address appears as a non-relayer withdrawal initiator, linking it to the withdrawal recipient specified in that withdrawal.
+
+Details: [`dl_1` / `dl_2` direct linkage](dataset/Tornado_Cash_Linkage_Dataset_introduction.md#direct-linkage)
+
+#### Gas Funding Linkage
+
+[![Gas Funding Linkage](assets/GF.png)](dataset/Tornado_Cash_Linkage_Dataset_introduction.md#gas-funding-linkage)
+
+Gas funding linkage captures relationships revealed by ETH funding used to pay transaction fees. In `gf_1`, the deposit address and withdrawal recipient share the same third-party gas funder. In `gf_2`, the deposit address funds the withdrawal initiator that submits the withdrawal transaction.
+
+Details: [`gf_1` / `gf_2` gas funding linkage](dataset/Tornado_Cash_Linkage_Dataset_introduction.md#gas-funding-linkage)
+
+#### Transaction-Intensity Linkage
+
+[![Transaction-Intensity Linkage](assets/TI.png)](dataset/Tornado_Cash_Linkage_Dataset_introduction.md#transaction-intensity-linkage)
+
+Transaction-intensity linkage captures high-strength interactions in transaction history. In `ti_1`, the deposit address and withdrawal recipient have high-intensity transfers. In `ti_2`, the deposit address and non-relayer withdrawal initiator have high-intensity transfers, and the initiator is linked to the withdrawal recipient specified in the TC withdrawal.
+
+Details: [`ti_1` / `ti_2` transaction-intensity linkage](dataset/Tornado_Cash_Linkage_Dataset_introduction.md#transaction-intensity-linkage)
+
+### Files
+
+| File | Records | Description |
+|---|---:|---|
+| [`tornadocash_onestep_clues.csv`](dataset/tornadocash_onestep_clues.csv) | 10,853 | Main linkage table with deposit-recipient pairs and metadata |
+| [`tornadocash_onestep_clues_details.csv`](dataset/tornadocash_onestep_clues_details.csv) | 25,615 | Transaction-step evidence for each linkage record |
+
+### Dataset Scope
+
+The main linkage table covers four ETH-denominated Tornado Cash pools:
+
+| Pool | Linkage Records |
+|---|---:|
+| `0_1ETH` | 3,809 |
+| `1ETH` | 3,902 |
+| `10ETH` | 2,273 |
+| `100ETH` | 869 |
+
+### Linkage Categories
+
+| Category | Clue Types | Records |
+|---|---|---:|
+| Direct linkage | `dl_1`, `dl_2` | 4,729 |
+| Gas funding linkage | `gf_1`, `gf_2` | 5,251 |
+| Transaction-intensity linkage | `ti_1`, `ti_2` | 873 |
 
 ---
 
@@ -159,36 +228,6 @@ Performs:
 - Blacklist filtering (burn addresses)
 - Deduplication by `(deposit_address, withdraw_address)` pairs
 - Exports main clues CSV and detail traces CSV
-
----
-
-## Dataset
-
-For detailed documentation, see [`dataset/Tornado_Cash_Linkage_Dataset_introduction.md`](dataset/Tornado_Cash_Linkage_Dataset_introduction.md).
-
-### Files
-
-| File | Records | Description |
-|---|---|---|
-| `tornadocash_onestep_clues.csv` | 10,853 | Main linkage table |
-| `tornadocash_onestep_clues_details.csv` | 25,615 | Transaction-step evidence |
-
-### Linkage Categories
-
-| Category | Clue Types | Records |
-|---|---|---|
-| Direct linkage | `dl_1`, `dl_2` | 4,729 |
-| Gas funding linkage | `gf_1`, `gf_2` | 5,251 |
-| Transaction-intensity linkage | `ti_1`, `ti_2` | 873 |
-
-### Pool Coverage
-
-| Pool | Linkage Records |
-|---|---:|
-| `0_1ETH` | 3,809 |
-| `1ETH` | 3,902 |
-| `10ETH` | 2,273 |
-| `100ETH` | 869 |
 
 ---
 
